@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  career        String
+  gender        String
+  bio           String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  interests     String[]
+
+  // Relaciones
+  matchesInitiated Match[] @relation("MatchesInitiated")
+  matchesReceived  Match[] @relation("MatchesReceived")
+  messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+  posts            Post[]
+  reactions        PostReaction[]
+  notifications    Notification[]
+  reports          Report[]
+  comments         Comment[]
+  
+  // New relations for user interactions
+  interactionsInitiated UserInteraction[] @relation("InteractionsInitiated")
+  interactionsReceived  UserInteraction[] @relation("InteractionsReceived")
+}
+
+model Match {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user1     User     @relation("MatchesInitiated", fields: [user1Id], references: [id])
+  user2     User     @relation("MatchesReceived", fields: [user2Id], references: [id])
+
+  messages  Message[]
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sender    User     @relation("MessagesSent", fields: [senderId], references: [id])
+  senderId  String
+  receiver  User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  receiverId String
+  content   String
+  createdAt DateTime @default(now())
+
+  match     Match?   @relation(fields: [matchId], references: [id])
+  matchId   String?
+}
+
+enum PostType {
+  CONFESSION
+  MARKETPLACE
+  LOST_AND_FOUND
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  author    User       @relation(fields: [authorId], references: [id])
+  authorId  String
+  content   String
+  type      PostType
+  title     String?
+  imageUrl  String?
+  createdAt DateTime   @default(now())
+
+  reactions PostReaction[]
+  reports   Report[]
+  comments  Comment[]
+}
+
+model PostReaction {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  isLike    Boolean
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  reporter  User     @relation(fields: [reporterId], references: [id])
+  reporterId String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model UserInteraction {
+  id        String   @id @default(uuid())
+  user1Id   String   // User who initiated the interaction
+  user2Id   String   // User who received the interaction
+  type      String   // "LIKE" or "DISLIKE"
+  createdAt DateTime @default(now())
+
+  // Relations
+  user1     User     @relation("InteractionsInitiated", fields: [user1Id], references: [id])
+  user2     User     @relation("InteractionsReceived", fields: [user2Id], references: [id])
+
+  @@unique([user1Id, user2Id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+}
+
+model Banner {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum PromotionCategory {
+  FOOD
+  DRINKS
+  EVENTS
+  PARTIES
+  OTHER
+}
+
+model Promotion {
+  id          String            @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime
+  location    String
+  category    PromotionCategory
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
