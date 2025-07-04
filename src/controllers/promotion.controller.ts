@@ -17,10 +17,9 @@ interface CreatePromotionBody {
   title: string;
   description: string;
   imageUrl?: string;
-  startDate: string;
-  endDate: string;
-  location: string;
   category: PromotionCategory;
+  discount?: number;
+  validUntil: string;
   isActive?: boolean;
 }
 
@@ -28,10 +27,9 @@ interface UpdatePromotionBody {
   title?: string;
   description?: string;
   imageUrl?: string;
-  startDate?: string;
-  endDate?: string;
-  location?: string;
   category?: PromotionCategory;
+  discount?: number;
+  validUntil?: string;
   isActive?: boolean;
 }
 
@@ -42,23 +40,22 @@ export const createPromotion = async (
   next: NextFunction
 ) => {
   try {
-    const { title, description, imageUrl, startDate, endDate, location, category, isActive = true } = req.body;
+    const { title, description, imageUrl, category, discount, validUntil, isActive = true } = req.body;
 
     // Validate required fields
-    if (!title || !description || !startDate || !endDate || !location || !category) {
-      throw new AppError(400, 'All fields are required except imageUrl');
+    if (!title || !description || !category || !validUntil) {
+      throw new AppError(400, 'Title, description, category, and validUntil are required');
     }
 
-    // Validate dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      throw new AppError(400, 'Invalid date format');
+    // Validate validUntil date
+    const validUntilDate = new Date(validUntil);
+    if (isNaN(validUntilDate.getTime())) {
+      throw new AppError(400, 'Invalid validUntil date format');
     }
 
-    if (start >= end) {
-      throw new AppError(400, 'End date must be after start date');
+    // Validate discount if provided
+    if (discount !== undefined && (discount < 0 || discount > 100)) {
+      throw new AppError(400, 'Discount must be between 0 and 100');
     }
 
     const promotion = await prisma.promotion.create({
@@ -66,9 +63,9 @@ export const createPromotion = async (
         title,
         description,
         imageUrl,
-        startDate: start,
-        endDate: end,
-        location,
+        startDate: new Date(), // Start from now
+        endDate: validUntilDate, // End at validUntil
+        location: 'Default Location', // You might want to make this configurable
         category,
         isActive
       }
@@ -173,7 +170,7 @@ export const updatePromotion = async (
 ) => {
   try {
     const { promotionId } = req.params;
-    const { title, description, imageUrl, startDate, endDate, location, category, isActive } = req.body;
+    const { title, description, imageUrl, category, discount, validUntil, isActive } = req.body;
 
     // Check if promotion exists
     const existingPromotion = await prisma.promotion.findUnique({
@@ -188,17 +185,10 @@ export const updatePromotion = async (
     let start = existingPromotion.startDate;
     let end = existingPromotion.endDate;
 
-    if (startDate) {
-      start = new Date(startDate);
-      if (isNaN(start.getTime())) {
-        throw new AppError(400, 'Invalid start date format');
-      }
-    }
-
-    if (endDate) {
-      end = new Date(endDate);
+    if (validUntil) {
+      end = new Date(validUntil);
       if (isNaN(end.getTime())) {
-        throw new AppError(400, 'Invalid end date format');
+        throw new AppError(400, 'Invalid validUntil date format');
       }
     }
 
@@ -214,7 +204,7 @@ export const updatePromotion = async (
         imageUrl,
         startDate: start,
         endDate: end,
-        location,
+        location: 'Default Location', // You might want to make this configurable
         category,
         isActive
       }

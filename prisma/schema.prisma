@@ -168,6 +168,7 @@ model Promotion {
   endDate     DateTime
   location    String
   category    PromotionCategory
+  discount    Int?              @default(0)
   isActive    Boolean           @default(true)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

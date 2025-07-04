@@ -80,9 +80,11 @@ router.post('/register', register);
  *                 type: string
  *                 format: email
  *                 description: Email del usuario
+ *                 example: "test2@espe.edu.ec"
  *               password:
  *                 type: string
  *                 description: Contraseña del usuario
+ *                 example: "test123"
  *     responses:
  *       200:
  *         description: Login exitoso

@@ -83,10 +83,18 @@ const options = {
             id: { type: 'string' },
             title: { type: 'string' },
             description: { type: 'string' },
-            category: { type: 'string' },
+            category: { type: 'string', enum: ['FOOD', 'DRINKS', 'EVENTS', 'PARTIES', 'OTHER'] },
             imageUrl: { type: 'string' },
-            createdAt: { type: 'string', format: 'date-time' }
-          }
+            discount: { type: 'number', description: 'Porcentaje de descuento' },
+            validUntil: { type: 'string', format: 'date-time', description: 'Fecha de expiración' },
+            startDate: { type: 'string', format: 'date-time' },
+            endDate: { type: 'string', format: 'date-time' },
+            location: { type: 'string' },
+            isActive: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+          },
+          required: ['title', 'description', 'category', 'validUntil']
         },
         Banner: {
           type: 'object',

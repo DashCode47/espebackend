@@ -159,33 +159,70 @@ router.use(authMiddleware);
  *               - title
  *               - description
  *               - category
+ *               - startDate
+ *               - endDate
+ *               - location
+ *               - isActive
  *             properties:
  *               title:
  *                 type: string
  *                 description: Título de la promoción
+ *                 example: "Switch"
  *               description:
  *                 type: string
  *                 description: Descripción de la promoción
+ *                 example: "Disfruta de 2x1"
  *               category:
  *                 type: string
+ *                 enum: [FOOD, DRINKS, EVENTS, PARTIES, OTHER]
  *                 description: Categoría de la promoción
+ *                 example: "DRINKS"
  *               imageUrl:
  *                 type: string
  *                 description: URL de la imagen de la promoción
+ *                 example: "https://dummyimage.com/600x400/32c7a7/fff"
  *               discount:
  *                 type: number
  *                 description: Porcentaje de descuento
+ *                 example: 0
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de inicio de la promoción
+ *                 example: "2025-07-01T01:17:15.549Z"
  *               validUntil:
  *                 type: string
  *                 format: date-time
  *                 description: Fecha de expiración de la promoción
+ *                 example: "2025-07-01T01:17:15.549Z"
+ *               endDate: 
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de fin de la promoción
+ *                 example: "2025-07-01T01:17:15.549Z"
+ *               location:
+ *                 type: string
+ *                 description: Ubicación de la promoción
+ *                 example: "Switch"
+ *               isActive:
+ *                 type: boolean
+ *                 description: Estado activo de la promoción
+ *                 example: true
  *     responses:
  *       201:
  *         description: Promoción creada exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Promotion'
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     promotion:
+ *                       $ref: '#/components/schemas/Promotion'
  *       400:
  *         description: Datos inválidos
  *         content:
@@ -238,10 +275,21 @@ router.post('/', createPromotion);
  *               discount:
  *                 type: number
  *                 description: Nuevo porcentaje de descuento
- *               validUntil:
+ *               startDate:
  *                 type: string
  *                 format: date-time
  *                 description: Nueva fecha de expiración
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Nueva fecha de expiración
+ *               location:
+ *                 type: string
+ *                 description: Nueva ubicación de la promoción
+ *               isActive:
+ *                 type: boolean
+ *                 description: Nuevo estado activo de la promoción
+ *                 example: true
  *     responses:
  *       200:
  *         description: Promoción actualizada exitosamente
