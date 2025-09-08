@@ -83,6 +83,33 @@ export const getAllUsers = async (
   }
 };
 
+// Obtener todos los usuarios visibles
+export const getVisibleUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { isVisible: true },
+      select: {
+        id: true,
+        name: true,
+        career: true,
+        avatarUrl: true,
+        interests: true,
+        isVisible: true
+      }
+    });
+    res.json({
+      status: 'success',
+      data: users
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Update user profile
 export const updateProfile = async (
   req: Request<{}, {}, UpdateProfileBody>,
@@ -129,85 +156,172 @@ export const updateProfile = async (
   }
 };
 
-// Get potential matches (other users)
-export const getPotentialMatches = async (
+// Get all unique interests for filter chips
+export const getAllInterests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Obtener todos los intereses únicos de los usuarios
+    const users = await prisma.user.findMany({
+      select: { interests: true }
+    });
+    // Flatten y filtrar duplicados
+    const allInterests = Array.from(
+      new Set(users.flatMap(u => u.interests || []))
+    );
+    res.json({
+      status: 'success',
+      data: allInterests
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get potential connections (other users) con filtros
+export const getPotentialConnections = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const userId = req.user?.userId;
+    const { interest, faculty, search } = req.query;
 
     if (!userId) {
       throw new AppError(401, 'Not authenticated');
     }
 
-    // Get users excluding:
-    // 1. The current user
-    // 2. Users that are already matched
-    // 3. Users that the current user has already interacted with (liked/disliked)
-    const users = await prisma.user.findMany({
-      where: {
-        AND: [
-          { id: { not: userId } },
+    // Construir condiciones dinámicas de filtrado
+    const andFilters: any[] = [
+      { id: { not: userId } },
+      { isVisible: true },
+      {
+        OR: [
           {
-            // Exclude users that are already matched with current user
-            OR: [
-              {
-                matchesInitiated: {
-                  none: {
-                    user2Id: userId
-                  }
-                }
-              },
-              {
-                matchesReceived: {
-                  none: {
-                    user1Id: userId
-                  }
-                }
+            connectionsInitiated: {
+              none: {
+                user2Id: userId
               }
-            ]
+            }
           },
           {
-            NOT: {
-              OR: [
-                {
-                  id: {
-                    in: (await prisma.userInteraction.findMany({
-                      where: { user1Id: userId },
-                      select: { user2Id: true }
-                    })).map(ui => ui.user2Id)
-                  }
-                },
-                {
-                  id: {
-                    in: (await prisma.userInteraction.findMany({
-                      where: { user2Id: userId },
-                      select: { user1Id: true }
-                    })).map(ui => ui.user1Id)
-                  }
-                }
-              ]
+            connectionsReceived: {
+              none: {
+                user1Id: userId
+              }
             }
           }
         ]
+      },
+      {
+        NOT: {
+          OR: [
+            {
+              id: {
+                in: (await prisma.userInteraction.findMany({
+                  where: { user1Id: userId },
+                  select: { user2Id: true }
+                })).map(ui => ui.user2Id)
+              }
+            },
+            {
+              id: {
+                in: (await prisma.userInteraction.findMany({
+                  where: { user2Id: userId },
+                  select: { user1Id: true }
+                })).map(ui => ui.user1Id)
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    // Filtro por interés (puede ser string o array)
+    if (interest) {
+      const interestsArray = Array.isArray(interest) ? interest : [interest];
+      andFilters.push({
+        interests: {
+          hasSome: interestsArray
+        }
+      });
+    }
+
+    // Filtro por facultad/carrera
+    if (faculty) {
+      andFilters.push({
+        career: {
+          contains: faculty as string,
+          mode: 'insensitive'
+        }
+      });
+    }
+
+    // Filtro por nombre
+    if (search) {
+      andFilters.push({
+        name: {
+          contains: search as string,
+          mode: 'insensitive'
+        }
+      });
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        AND: andFilters
       },
       select: {
         id: true,
         name: true,
         career: true,
-        gender: true,
-        bio: true,
         avatarUrl: true,
         interests: true
       },
-      take: 10 // Limit to 10 users at a time
+      take: 20 // Puedes ajustar el límite
     });
 
     res.json({
       status: 'success',
-      data: { users }
+      data: users
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Cambiar la visibilidad del usuario autenticado
+export const setUserVisibility = async (
+  req: Request<{}, {}, { isVisible: boolean }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    const { isVisible } = req.body;
+
+    if (!userId) {
+      throw new AppError(401, 'Not authenticated');
+    }
+    if (typeof isVisible !== 'boolean') {
+      throw new AppError(400, 'El campo isVisible debe ser booleano');
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isVisible },
+      select: {
+        id: true,
+        isVisible: true
+      }
+    });
+
+    res.json({
+      status: 'success',
+      data: updatedUser
     });
   } catch (error) {
     next(error);

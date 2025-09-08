@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile, getPotentialMatches, getAllUsers } from '../controllers/user.controller';
+import { getProfile, updateProfile, getPotentialConnections, getAllUsers, getAllInterests, getVisibleUsers, setUserVisibility } from '../controllers/user.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -132,25 +132,57 @@ router.put('/profile', updateProfile);
 
 /**
  * @swagger
- * /api/users/potential-matches:
+ * /api/users/visible:
  *   get:
- *     summary: Obtener usuarios potenciales para matching
+ *     summary: Obtener todos los usuarios con perfil visible
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios visibles obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/visible', getVisibleUsers);
+
+/**
+ * @swagger
+ * /api/users/potential-connections:
+ *   get:
+ *     summary: Obtener usuarios potenciales para conexiones
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: page
+ *         name: interest
  *         schema:
- *           type: integer
- *           default: 1
- *         description: Número de página
+ *           type: string
+ *         description: Filtrar por interés (puede repetirse para varios intereses)
  *       - in: query
- *         name: limit
+ *         name: faculty
  *         schema:
- *           type: integer
- *           default: 10
- *         description: Número de usuarios por página
+ *           type: string
+ *         description: Filtrar por facultad/carrera
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Buscar por nombre
  *     responses:
  *       200:
  *         description: Lista de usuarios potenciales obtenida exitosamente
@@ -159,16 +191,10 @@ router.put('/profile', updateProfile);
  *             schema:
  *               type: object
  *               properties:
- *                 users:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/User'
- *                 total:
- *                   type: integer
- *                 page:
- *                   type: integer
- *                 totalPages:
- *                   type: integer
  *       401:
  *         description: No autorizado
  *         content:
@@ -176,6 +202,83 @@ router.put('/profile', updateProfile);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/potential-matches', getPotentialMatches);
+router.get('/potential-connections', getPotentialConnections);
+
+/**
+ * @swagger
+ * /api/users/interests:
+ *   get:
+ *     summary: Obtener todos los intereses únicos de la plataforma
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de intereses obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/interests', getAllInterests);
+
+/**
+ * @swagger
+ * /api/users/visibility:
+ *   put:
+ *     summary: Cambiar la visibilidad del usuario autenticado
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isVisible:
+ *                 type: boolean
+ *                 description: Nueva visibilidad del usuario
+ *     responses:
+ *       200:
+ *         description: Visibilidad actualizada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     isVisible:
+ *                       type: boolean
+ *       400:
+ *         description: Datos inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/visibility', setUserVisibility);
 
 export default router; 

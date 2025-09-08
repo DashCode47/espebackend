@@ -19,10 +19,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   interests     String[]
+  isVisible     Boolean   @default(true)
 
   // Relaciones
-  matchesInitiated Match[] @relation("MatchesInitiated")
-  matchesReceived  Match[] @relation("MatchesReceived")
+  connectionsInitiated Connection[] @relation("ConnectionsInitiated")
+  connectionsReceived  Connection[] @relation("ConnectionsReceived")
   messagesSent     Message[] @relation("MessagesSent")
   messagesReceived Message[] @relation("MessagesReceived")
   posts            Post[]
@@ -36,15 +37,15 @@ model User {
   interactionsReceived  UserInteraction[] @relation("InteractionsReceived")
 }
 
-model Match {
+model Connection {
   id        String   @id @default(uuid())
   user1Id   String
   user2Id   String
   createdAt DateTime @default(now())
 
   // Relations
-  user1     User     @relation("MatchesInitiated", fields: [user1Id], references: [id])
-  user2     User     @relation("MatchesReceived", fields: [user2Id], references: [id])
+  user1     User     @relation("ConnectionsInitiated", fields: [user1Id], references: [id])
+  user2     User     @relation("ConnectionsReceived", fields: [user2Id], references: [id])
 
   messages  Message[]
 
@@ -60,8 +61,8 @@ model Message {
   content   String
   createdAt DateTime @default(now())
 
-  match     Match?   @relation(fields: [matchId], references: [id])
-  matchId   String?
+  connection     Connection?   @relation(fields: [connectionId], references: [id])
+  connectionId   String?
 }
 
 enum PostType {
@@ -172,4 +173,29 @@ model Promotion {
   isActive    Boolean           @default(true)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+}
+
+model Career {
+  id                    String   @id @default(uuid())
+  code                  String   @unique
+  name                  String
+  modality              String   // Presencial, Semipresencial, Virtual
+  duration              Int      // Duración en semestres
+  schedule              String   // Matutina, Vespertina, Nocturna
+  campus                String
+  cesResolution         String   // Resolución del CES
+  directorName          String
+  directorEmail         String
+  accreditations        String[] // Array de acreditaciones
+  mission               String
+  vision                String
+  objectives            String[]
+  graduateProfile       String   // Perfil de egreso general
+  professionalProfile   String   // Perfil de egreso profesional
+  curriculumPdfUrl      String?  // URL del PDF de la malla curricular
+  curriculumDescription String   // Descripción de la malla curricular
+  subjects              String[] // Lista de asignaturas
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

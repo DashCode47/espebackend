@@ -1,0 +1,165 @@
+-- Script para insertar datos de ejemplo de la carrera de Biotecnología
+-- Ejecutar después de crear la migración de Prisma
+
+INSERT INTO "Career" (
+  id,
+  code,
+  name,
+  modality,
+  duration,
+  schedule,
+  campus,
+  "cesResolution",
+  "directorName",
+  "directorEmail",
+  accreditations,
+  mission,
+  vision,
+  objectives,
+  "graduateProfile",
+  "professionalProfile",
+  "curriculumPdfUrl",
+  "curriculumDescription",
+  subjects,
+  "isActive",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  gen_random_uuid(),
+  'BIOTEC',
+  'Ingeniería en Biotecnología',
+  'Presencial',
+  10,
+  'Matutina',
+  'Sangolquí',
+  'RPC-SO-18-No. 001-2023',
+  'Dra. María Elena González',
+  'maria.gonzalez@espe.edu.ec',
+  ARRAY['Acreditación CEAACES 2019-2025', 'Certificación ISO 9001:2015'],
+  'Formar profesionales en Ingeniería en Biotecnología con sólidos conocimientos científicos y tecnológicos, capaces de aplicar principios biológicos y tecnológicos para el desarrollo de soluciones innovadoras en áreas como la salud, agricultura, medio ambiente e industria, contribuyendo al desarrollo sostenible del país.',
+  'Ser reconocida como una carrera líder en la formación de ingenieros biotecnólogos, con estándares internacionales de calidad, que genere investigación de vanguardia y contribuya significativamente al desarrollo tecnológico y científico del Ecuador.',
+  ARRAY[
+    'Formar profesionales con competencias técnicas y científicas en biotecnología',
+    'Desarrollar capacidades de investigación e innovación tecnológica',
+    'Promover la aplicación de la biotecnología para el desarrollo sostenible',
+    'Fomentar la colaboración con instituciones nacionales e internacionales',
+    'Contribuir al desarrollo de la industria biotecnológica del país'
+  ],
+  'El egresado de Ingeniería en Biotecnología será un profesional con formación integral, capaz de aplicar conocimientos científicos y tecnológicos para resolver problemas complejos en el campo de la biotecnología, con habilidades de liderazgo, trabajo en equipo y compromiso con la sociedad.',
+  'El ingeniero biotecnólogo podrá desempeñarse en áreas como: investigación y desarrollo en biotecnología, producción de biofármacos, control de calidad en industrias biotecnológicas, gestión de proyectos biotecnológicos, consultoría técnica, docencia universitaria, y emprendimiento en el sector biotecnológico.',
+  'https://espe.edu.ec/carreras/biotecnologia/malla-curricular.pdf',
+  'La malla curricular está estructurada en 10 semestres, con un total de 240 créditos. Incluye asignaturas de formación básica en ciencias, formación profesional específica en biotecnología, y formación complementaria en humanidades y gestión empresarial.',
+  ARRAY[
+    'Matemáticas I',
+    'Física I',
+    'Química General',
+    'Biología Celular',
+    'Programación',
+    'Estadística',
+    'Microbiología',
+    'Bioquímica',
+    'Genética',
+    'Biotecnología Vegetal',
+    'Biotecnología Animal',
+    'Biotecnología Microbiana',
+    'Biotecnología Ambiental',
+    'Biotecnología Industrial',
+    'Bioinformática',
+    'Gestión de Proyectos',
+    'Emprendimiento',
+    'Trabajo de Titulación'
+  ],
+  true,
+  NOW(),
+  NOW()
+);
+
+-- Insertar más carreras de ejemplo
+INSERT INTO "Career" (
+  id,
+  code,
+  name,
+  modality,
+  duration,
+  schedule,
+  campus,
+  "cesResolution",
+  "directorName",
+  "directorEmail",
+  accreditations,
+  mission,
+  vision,
+  objectives,
+  "graduateProfile",
+  "professionalProfile",
+  "curriculumPdfUrl",
+  "curriculumDescription",
+  subjects,
+  "isActive",
+  "createdAt",
+  "updatedAt"
+) VALUES 
+(
+  gen_random_uuid(),
+  'SISTEMAS',
+  'Ingeniería en Sistemas',
+  'Presencial',
+  10,
+  'Matutina',
+  'Sangolquí',
+  'RPC-SO-18-No. 002-2023',
+  'Ing. Carlos Rodríguez',
+  'carlos.rodriguez@espe.edu.ec',
+  ARRAY['Acreditación CEAACES 2019-2025'],
+  'Formar profesionales en Ingeniería en Sistemas con sólidos conocimientos en tecnologías de la información.',
+  'Ser reconocida como una carrera líder en la formación de ingenieros en sistemas.',
+  ARRAY[
+    'Formar profesionales con competencias técnicas en sistemas',
+    'Desarrollar capacidades de innovación tecnológica'
+  ],
+  'El egresado será un profesional con formación integral en sistemas.',
+  'El ingeniero en sistemas podrá desempeñarse en desarrollo de software.',
+  'https://espe.edu.ec/carreras/sistemas/malla-curricular.pdf',
+  'Malla curricular estructurada en 10 semestres.',
+  ARRAY['Programación I', 'Base de Datos', 'Redes', 'Ingeniería de Software'],
+  true,
+  NOW(),
+  NOW()
+),
+(
+  gen_random_uuid(),
+  'MECANICA',
+  'Ingeniería Mecánica',
+  'Presencial',
+  10,
+  'Vespertina',
+  'Sangolquí',
+  'RPC-SO-18-No. 003-2023',
+  'Ing. Ana Martínez',
+  'ana.martinez@espe.edu.ec',
+  ARRAY['Acreditación CEAACES 2019-2025'],
+  'Formar profesionales en Ingeniería Mecánica con sólidos conocimientos en mecánica.',
+  'Ser reconocida como una carrera líder en la formación de ingenieros mecánicos.',
+  ARRAY[
+    'Formar profesionales con competencias técnicas en mecánica',
+    'Desarrollar capacidades de diseño mecánico'
+  ],
+  'El egresado será un profesional con formación integral en mecánica.',
+  'El ingeniero mecánico podrá desempeñarse en diseño y fabricación.',
+  'https://espe.edu.ec/carreras/mecanica/malla-curricular.pdf',
+  'Malla curricular estructurada en 10 semestres.',
+  ARRAY['Mecánica I', 'Termodinámica', 'Diseño Mecánico', 'Materiales'],
+  true,
+  NOW(),
+  NOW()
+);
+
+-- Verificar la inserción
+SELECT 
+  code,
+  name,
+  modality,
+  campus,
+  "isActive"
+FROM "Career"
+ORDER BY code;
