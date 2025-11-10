@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getProfile, updateProfile, getPotentialConnections, getAllUsers, getAllInterests, getVisibleUsers, setUserVisibility } from '../controllers/user.controller';
+import { getUserTrips } from '../controllers/trip.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -280,5 +281,34 @@ router.get('/interests', getAllInterests);
  *               $ref: '#/components/schemas/Error'
  */
 router.put('/visibility', setUserVisibility);
+
+/**
+ * @swagger
+ * /api/users/{id}/trips:
+ *   get:
+ *     summary: Listar viajes creados o reservados por un usuario
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [created, joined, all]
+ *           default: all
+ *         description: Tipo de viajes a listar
+ *     responses:
+ *       200:
+ *         description: Lista de viajes obtenida exitosamente
+ *       404:
+ *         description: Usuario no encontrado
+ */
+router.get('/:id/trips', getUserTrips);
 
 export default router; 

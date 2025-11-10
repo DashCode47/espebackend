@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPost, getPosts, getPost, updatePost, reactToPost } from '../controllers/post.controller';
+import { createPost, getPosts, getPost, updatePost, reactToPost, deleteReaction } from '../controllers/post.controller';
 import { createComment, getPostComments } from '../controllers/comment.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
@@ -265,6 +265,46 @@ router.put('/:postId', updatePost);
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/:postId/react', reactToPost);
+
+/**
+ * @swagger
+ * /api/posts/{postId}/react:
+ *   delete:
+ *     summary: Eliminar reacción a un post
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del post
+ *     responses:
+ *       200:
+ *         description: Reacción eliminada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: No autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Post o reacción no encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete('/:postId/react', deleteReaction);
 
 /**
  * @swagger

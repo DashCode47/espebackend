@@ -11,6 +11,7 @@ import notificationRoutes from './routes/notification.routes';
 import promotionRoutes from './routes/promotion.routes';
 import bannerRoutes from './routes/bannerRoutes';
 import careerRoutes from './routes/career.routes';
+import tripRoutes from './routes/trip.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/careers', careerRoutes);
+app.use('/api/trips', tripRoutes);
 
 // Base route
 app.get('/', (req, res) => {

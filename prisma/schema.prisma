@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  STUDENT
+  DRIVER
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -16,6 +21,7 @@ model User {
   gender        String
   bio           String?
   avatarUrl     String?
+  role          UserRole  @default(STUDENT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   interests     String[]
@@ -35,6 +41,12 @@ model User {
   // New relations for user interactions
   interactionsInitiated UserInteraction[] @relation("InteractionsInitiated")
   interactionsReceived  UserInteraction[] @relation("InteractionsReceived")
+  
+  // Carpooling relations
+  tripsAsDriver    Trip[] @relation("DriverTrips")
+  tripRequests     TripRequest[]
+  ratingsGiven      TripRating[] @relation("RatingsGiven")
+  ratingsReceived   TripRating[] @relation("RatingsReceived")
 }
 
 model Connection {
@@ -198,4 +210,62 @@ model Career {
   isActive              Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+}
+
+enum TripStatus {
+  ACTIVE
+  FULL
+  CANCELLED
+}
+
+enum TripRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Trip {
+  id            String          @id @default(uuid())
+  driverId      String
+  driver        User            @relation("DriverTrips", fields: [driverId], references: [id])
+  origin        String
+  destination   String
+  departureTime DateTime
+  availableSeats Int
+  price         Float?
+  notes         String?
+  status        TripStatus      @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  requests      TripRequest[]
+  ratings       TripRating[]
+}
+
+model TripRequest {
+  id          String            @id @default(uuid())
+  tripId      String
+  trip        Trip              @relation(fields: [tripId], references: [id])
+  passengerId String
+  passenger   User              @relation(fields: [passengerId], references: [id])
+  status      TripRequestStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+
+  @@unique([tripId, passengerId])
+}
+
+model TripRating {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id])
+  raterId     String
+  rater       User     @relation("RatingsGiven", fields: [raterId], references: [id])
+  driverId    String
+  driver      User     @relation("RatingsReceived", fields: [driverId], references: [id])
+  rating      Int      // 1-5
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([tripId, raterId])
 }

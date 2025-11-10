@@ -236,17 +236,23 @@ export const updatePost = async (
 
 // React to a post (like/dislike)
 export const reactToPost = async (
-  req: Request<{ postId: string }, {}, { isLike: boolean }>,
+  req: Request<{ postId: string }, {}, { reactionType: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const userId = req.user?.userId;
     const { postId } = req.params;
-    const { isLike } = req.body;
+    const { reactionType } = req.body;
 
     if (!userId) {
       throw new AppError(401, 'Not authenticated');
+    }
+
+    // Validate reaction type
+    const validReactionTypes = ['like', 'love', 'laugh', 'wow', 'sad', 'angry'];
+    if (!reactionType || !validReactionTypes.includes(reactionType)) {
+      throw new AppError(400, 'Invalid reaction type. Must be one of: like, love, laugh, wow, sad, angry');
     }
 
     // Check if post exists
@@ -273,6 +279,10 @@ export const reactToPost = async (
         userId
       }
     });
+
+    // Convert reaction type to boolean (like = true, others = false for now)
+    // This maintains compatibility with the current schema
+    const isLike = reactionType === 'like';
 
     let reaction;
 
@@ -311,7 +321,57 @@ export const reactToPost = async (
 
     res.json({
       status: 'success',
+      message: 'Reaction registered successfully',
       data: { reaction }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete reaction from a post
+export const deleteReaction = async (
+  req: Request<{ postId: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    const { postId } = req.params;
+
+    if (!userId) {
+      throw new AppError(401, 'Not authenticated');
+    }
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId }
+    });
+
+    if (!post) {
+      throw new AppError(404, 'Post not found');
+    }
+
+    // Check if reaction exists
+    const existingReaction = await prisma.postReaction.findFirst({
+      where: {
+        postId,
+        userId
+      }
+    });
+
+    if (!existingReaction) {
+      throw new AppError(404, 'Reaction not found');
+    }
+
+    // Delete the reaction
+    await prisma.postReaction.delete({
+      where: { id: existingReaction.id }
+    });
+
+    res.json({
+      status: 'success',
+      message: 'Reaction deleted successfully'
     });
   } catch (error) {
     next(error);
