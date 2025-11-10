@@ -67,7 +67,7 @@ export const likeUser = async (
     
     // If there's a mutual like, create a match
     if (mutualMatch) {
-      match = await prisma.match.create({
+      match = await prisma.connection.create({
         data: {
           user1Id: userId,
           user2Id: targetUserId
@@ -137,29 +137,11 @@ export const getMatches = async (
     }
 
     // Get mutual matches (where both users have liked each other)
-    const mutualMatches = await prisma.match.findMany({
+    const mutualMatches = await prisma.connection.findMany({
       where: {
         OR: [
-          {
-            user1Id: userId,
-            user2: {
-              matchesInitiated: {
-                some: {
-                  user2Id: userId
-                }
-              }
-            }
-          },
-          {
-            user2Id: userId,
-            user1: {
-              matchesReceived: {
-                some: {
-                  user1Id: userId
-                }
-              }
-            }
-          }
+          { user1Id: userId },
+          { user2Id: userId }
         ]
       },
       include: {
@@ -217,39 +199,11 @@ export const checkMatch = async (
       throw new AppError(401, 'Not authenticated');
     }
 
-    const match = await prisma.match.findFirst({
+    const match = await prisma.connection.findFirst({
       where: {
-        AND: [
-          {
-            OR: [
-              { user1Id: userId, user2Id: targetUserId },
-              { user1Id: targetUserId, user2Id: userId }
-            ]
-          },
-          {
-            OR: [
-              {
-                user1Id: userId,
-                user2: {
-                  matchesInitiated: {
-                    some: {
-                      user2Id: userId
-                    }
-                  }
-                }
-              },
-              {
-                user2Id: userId,
-                user1: {
-                  matchesReceived: {
-                    some: {
-                      user1Id: userId
-                    }
-                  }
-                }
-              }
-            ]
-          }
+        OR: [
+          { user1Id: userId, user2Id: targetUserId },
+          { user1Id: targetUserId, user2Id: userId }
         ]
       }
     });

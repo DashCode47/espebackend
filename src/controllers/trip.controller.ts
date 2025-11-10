@@ -651,12 +651,17 @@ export const confirmPassenger = async (
 
     // Verificar si el viaje está lleno ahora
     const newAcceptedCount = acceptedCount + 1;
-    let updatedTrip = trip;
+    let updatedTrip: any = trip;
 
     if (newAcceptedCount >= trip.availableSeats) {
       updatedTrip = await prisma.trip.update({
         where: { id },
-        data: { status: TripStatus.FULL }
+        data: { status: TripStatus.FULL },
+        include: {
+          requests: {
+            where: { status: TripRequestStatus.ACCEPTED }
+          }
+        }
       });
     }
 
@@ -773,7 +778,7 @@ export const getUserTrips = async (
     // Eliminar duplicados si type === 'all'
     if (type === 'all') {
       const uniqueTrips = trips.reduce((acc, trip) => {
-        if (!acc.find(t => t.id === trip.id)) {
+        if (!acc.find((t: any) => t.id === trip.id)) {
           acc.push(trip);
         }
         return acc;
