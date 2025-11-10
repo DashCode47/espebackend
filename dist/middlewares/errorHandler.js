@@ -28,8 +28,11 @@ const errorHandler = (err, req, res, next) => {
     console.error('Request URL:', req.url);
     console.error('Request method:', req.method);
     console.error('====================');
-    // In development or Vercel preview, show more error details
-    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview';
-    return res.status(500).json(Object.assign({ status: 'error', message: 'Internal server error' }, (isDevelopment && Object.assign(Object.assign({ error: err.message, errorName: err.name }, (err.code && { code: err.code })), { stack: err.stack }))));
+    // Show error details for debugging (can be disabled in production later)
+    const showDetails = process.env.NODE_ENV === 'development' ||
+        process.env.VERCEL_ENV === 'preview' ||
+        process.env.VERCEL_ENV === 'development' ||
+        true; // Temporarily always show for debugging
+    return res.status(500).json(Object.assign({ status: 'error', message: 'Internal server error' }, (showDetails && Object.assign(Object.assign({ error: err.message, errorName: err.name }, (err.code && { code: err.code })), (process.env.NODE_ENV === 'development' && { stack: err.stack })))));
 };
 exports.errorHandler = errorHandler;

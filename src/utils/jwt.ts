@@ -9,7 +9,15 @@ export interface TokenPayload {
 }
 
 export const generateToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRATION });
+  try {
+    if (!JWT_SECRET || JWT_SECRET === 'default-secret-key') {
+      console.warn('WARNING: Using default JWT_SECRET. Set JWT_SECRET environment variable for production.');
+    }
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRATION });
+  } catch (error) {
+    console.error('Error generating token:', error);
+    throw new Error('Failed to generate token');
+  }
 };
 
 export const verifyToken = (token: string): TokenPayload => {

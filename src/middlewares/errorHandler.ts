@@ -35,17 +35,20 @@ export const errorHandler = (
   console.error('Request method:', req.method);
   console.error('====================');
   
-  // In development or Vercel preview, show more error details
-  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview';
+  // Show error details for debugging (can be disabled in production later)
+  const showDetails = process.env.NODE_ENV === 'development' || 
+                      process.env.VERCEL_ENV === 'preview' || 
+                      process.env.VERCEL_ENV === 'development' ||
+                      true; // Temporarily always show for debugging
   
   return res.status(500).json({
     status: 'error',
     message: 'Internal server error',
-    ...(isDevelopment && { 
+    ...(showDetails && { 
       error: err.message,
       errorName: err.name,
       ...((err as any).code && { code: (err as any).code }),
-      stack: err.stack 
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     })
   });
 }; 
