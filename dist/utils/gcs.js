@@ -47,7 +47,20 @@ const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, v
     }
     catch (error) {
         console.error('Error uploading to GCS:', error);
-        throw new errorHandler_1.AppError(500, 'Failed to upload image to Google Cloud Storage');
+        console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            code: error === null || error === void 0 ? void 0 : error.code,
+            errors: error === null || error === void 0 ? void 0 : error.errors
+        });
+        // Check if it's a configuration error
+        if (!process.env.GCS_PROJECT_ID || !bucketName) {
+            throw new errorHandler_1.AppError(500, 'Google Cloud Storage is not configured. Please set GCS_PROJECT_ID and GCS_BUCKET_NAME environment variables.');
+        }
+        if (!process.env.GCS_CREDENTIALS && !process.env.GCS_KEY_FILENAME) {
+            throw new errorHandler_1.AppError(500, 'Google Cloud Storage credentials are not configured. Please set GCS_CREDENTIALS or GCS_KEY_FILENAME.');
+        }
+        throw new errorHandler_1.AppError(500, `Failed to upload image to Google Cloud Storage: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 });
 exports.uploadToGCS = uploadToGCS;

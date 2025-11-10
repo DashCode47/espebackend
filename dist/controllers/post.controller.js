@@ -23,11 +23,24 @@ var PostType;
 })(PostType || (PostType = {}));
 // Create a new post
 const createPost = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         const { type, content, title } = req.body;
         const file = req.file;
+        // Debug logging
+        console.log('=== POST CREATE DEBUG ===');
+        console.log('Content-Type:', req.headers['content-type']);
+        console.log('Body:', { type, content, title });
+        console.log('File received:', file ? {
+            fieldname: file.fieldname,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            hasBuffer: !!file.buffer,
+            bufferLength: (_b = file.buffer) === null || _b === void 0 ? void 0 : _b.length
+        } : 'No file');
+        console.log('========================');
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
@@ -41,13 +54,22 @@ const createPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         let imageUrl;
         // If an image file was uploaded, upload it to Google Cloud Storage
         if (file) {
+            if (!file.buffer || file.buffer.length === 0) {
+                console.error('File buffer is empty or undefined');
+                throw new errorHandler_1.AppError(400, 'Image file is empty or invalid. Please ensure the file is sent correctly.');
+            }
             try {
-                const fileName = (0, gcs_1.generateFileName)(file.originalname, userId);
-                imageUrl = yield (0, gcs_1.uploadToGCS)(file.buffer, fileName, file.mimetype);
+                const fileName = (0, gcs_1.generateFileName)(file.originalname || 'image.jpg', userId);
+                console.log('Uploading to GCS:', { fileName, size: file.buffer.length, mimetype: file.mimetype });
+                imageUrl = yield (0, gcs_1.uploadToGCS)(file.buffer, fileName, file.mimetype || 'image/jpeg');
+                console.log('Image uploaded successfully:', imageUrl);
             }
             catch (uploadError) {
                 console.error('Error uploading image to GCS:', uploadError);
-                throw new errorHandler_1.AppError(500, 'Failed to upload image');
+                if (uploadError instanceof errorHandler_1.AppError) {
+                    throw uploadError;
+                }
+                throw new errorHandler_1.AppError(500, `Failed to upload image: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
             }
         }
         const post = yield prisma_1.prisma.post.create({
