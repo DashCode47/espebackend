@@ -32,7 +32,16 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middlewares
 app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+// JSON parser - skip for multipart/form-data (let multer handle it)
+app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    if (contentType.includes('multipart/form-data')) {
+        // Skip JSON parsing for multipart requests - multer will handle it
+        return next();
+    }
+    // Parse JSON for other requests
+    express_1.default.json()(req, res, next);
+});
 // Swagger documentation
 app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.specs, {
     customCss: '.swagger-ui .topbar { display: none }',

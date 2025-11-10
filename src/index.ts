@@ -21,7 +21,17 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
+
+// JSON parser - skip for multipart/form-data (let multer handle it)
+app.use((req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    // Skip JSON parsing for multipart requests - multer will handle it
+    return next();
+  }
+  // Parse JSON for other requests
+  express.json()(req, res, next);
+});
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
