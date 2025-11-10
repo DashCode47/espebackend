@@ -24,8 +24,16 @@ export const errorHandler = (
   }
 
   console.error('Error:', err);
+  
+  // In development, show more error details
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  
   return res.status(500).json({
     status: 'error',
-    message: 'Internal server error'
+    message: 'Internal server error',
+    ...(isDevelopment && { 
+      error: err.message,
+      stack: err.stack 
+    })
   });
 }; 

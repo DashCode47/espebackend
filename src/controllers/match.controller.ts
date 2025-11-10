@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma';
 import { AppError } from '../middlewares/errorHandler';
 import { createNotification } from './notification.controller';
-
-const prisma = new PrismaClient();
 
 interface UserInfo {
   id: string;

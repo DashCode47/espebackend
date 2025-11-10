@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setUserVisibility = exports.getPotentialConnections = exports.getAllInterests = exports.updateProfile = exports.getVisibleUsers = exports.getAllUsers = exports.getProfile = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
-const prisma = new client_1.PrismaClient();
 // Get current user profile
 const getProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -21,7 +20,7 @@ const getProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const user = yield prisma.user.findUnique({
+        const user = yield prisma_1.prisma.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
@@ -50,7 +49,7 @@ const getProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 exports.getProfile = getProfile;
 const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const users = yield prisma.user.findMany({
+        const users = yield prisma_1.prisma.user.findMany({
             select: {
                 id: true,
                 email: true,
@@ -76,7 +75,7 @@ exports.getAllUsers = getAllUsers;
 // Obtener todos los usuarios visibles
 const getVisibleUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const users = yield prisma.user.findMany({
+        const users = yield prisma_1.prisma.user.findMany({
             where: { isVisible: true },
             select: {
                 id: true,
@@ -106,7 +105,7 @@ const updateProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const updatedUser = yield prisma.user.update({
+        const updatedUser = yield prisma_1.prisma.user.update({
             where: { id: userId },
             data: {
                 name,
@@ -142,7 +141,7 @@ exports.updateProfile = updateProfile;
 const getAllInterests = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener todos los intereses únicos de los usuarios
-        const users = yield prisma.user.findMany({
+        const users = yield prisma_1.prisma.user.findMany({
             select: { interests: true }
         });
         // Flatten y filtrar duplicados
@@ -193,7 +192,7 @@ const getPotentialConnections = (req, res, next) => __awaiter(void 0, void 0, vo
                     OR: [
                         {
                             id: {
-                                in: (yield prisma.userInteraction.findMany({
+                                in: (yield prisma_1.prisma.userInteraction.findMany({
                                     where: { user1Id: userId },
                                     select: { user2Id: true }
                                 })).map(ui => ui.user2Id)
@@ -201,7 +200,7 @@ const getPotentialConnections = (req, res, next) => __awaiter(void 0, void 0, vo
                         },
                         {
                             id: {
-                                in: (yield prisma.userInteraction.findMany({
+                                in: (yield prisma_1.prisma.userInteraction.findMany({
                                     where: { user2Id: userId },
                                     select: { user1Id: true }
                                 })).map(ui => ui.user1Id)
@@ -238,7 +237,7 @@ const getPotentialConnections = (req, res, next) => __awaiter(void 0, void 0, vo
                 }
             });
         }
-        const users = yield prisma.user.findMany({
+        const users = yield prisma_1.prisma.user.findMany({
             where: {
                 AND: andFilters
             },
@@ -273,7 +272,7 @@ const setUserVisibility = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         if (typeof isVisible !== 'boolean') {
             throw new errorHandler_1.AppError(400, 'El campo isVisible debe ser booleano');
         }
-        const updatedUser = yield prisma.user.update({
+        const updatedUser = yield prisma_1.prisma.user.update({
             where: { id: userId },
             data: { isVisible },
             select: {

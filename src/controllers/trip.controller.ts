@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, TripStatus, TripRequestStatus } from '@prisma/client';
+import { TripStatus, TripRequestStatus } from '@prisma/client';
+import { prisma } from '../utils/prisma';
 import { AppError } from '../middlewares/errorHandler';
 import { createNotification } from './notification.controller';
 import { UserRole } from '../middlewares/role.middleware';
-
-const prisma = new PrismaClient();
 
 interface CreateTripBody {
   origin: string;

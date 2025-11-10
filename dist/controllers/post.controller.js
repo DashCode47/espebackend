@@ -10,10 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteReaction = exports.reactToPost = exports.updatePost = exports.getPost = exports.getPosts = exports.createPost = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const notification_controller_1 = require("./notification.controller");
-const prisma = new client_1.PrismaClient();
 // Define PostType enum to match Prisma schema
 var PostType;
 (function (PostType) {
@@ -37,7 +36,7 @@ const createPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if ((type === 'MARKETPLACE' || type === 'LOST_AND_FOUND') && !title) {
             throw new errorHandler_1.AppError(400, 'Title is required for marketplace and lost & found posts');
         }
-        const post = yield prisma.post.create({
+        const post = yield prisma_1.prisma.post.create({
             data: {
                 type,
                 content,
@@ -73,7 +72,7 @@ const getPosts = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const where = type ? { type: type } : {};
         const [posts, total] = yield Promise.all([
-            prisma.post.findMany({
+            prisma_1.prisma.post.findMany({
                 where,
                 include: {
                     author: {
@@ -98,7 +97,7 @@ const getPosts = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.post.count({ where })
+            prisma_1.prisma.post.count({ where })
         ]);
         res.json({
             status: 'success',
@@ -122,7 +121,7 @@ exports.getPosts = getPosts;
 const getPost = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { postId } = req.params;
-        const post = yield prisma.post.findUnique({
+        const post = yield prisma_1.prisma.post.findUnique({
             where: { id: postId },
             include: {
                 author: {
@@ -166,7 +165,7 @@ const updatePost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
         // Check if post exists and belongs to user
-        const existingPost = yield prisma.post.findUnique({
+        const existingPost = yield prisma_1.prisma.post.findUnique({
             where: { id: postId }
         });
         if (!existingPost) {
@@ -175,7 +174,7 @@ const updatePost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (existingPost.authorId !== userId) {
             throw new errorHandler_1.AppError(403, 'Not authorized to update this post');
         }
-        const updatedPost = yield prisma.post.update({
+        const updatedPost = yield prisma_1.prisma.post.update({
             where: { id: postId },
             data: {
                 content,
@@ -219,7 +218,7 @@ const reactToPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             throw new errorHandler_1.AppError(400, 'Invalid reaction type. Must be one of: like, love, laugh, wow, sad, angry');
         }
         // Check if post exists
-        const post = yield prisma.post.findUnique({
+        const post = yield prisma_1.prisma.post.findUnique({
             where: { id: postId },
             include: {
                 author: {
@@ -234,7 +233,7 @@ const reactToPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             throw new errorHandler_1.AppError(404, 'Post not found');
         }
         // Check if reaction already exists
-        const existingReaction = yield prisma.postReaction.findFirst({
+        const existingReaction = yield prisma_1.prisma.postReaction.findFirst({
             where: {
                 postId,
                 userId
@@ -246,7 +245,7 @@ const reactToPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         let reaction;
         if (existingReaction) {
             // Update existing reaction
-            reaction = yield prisma.postReaction.update({
+            reaction = yield prisma_1.prisma.postReaction.update({
                 where: { id: existingReaction.id },
                 data: { isLike }
             });
@@ -257,7 +256,7 @@ const reactToPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         }
         else {
             // Create new reaction
-            reaction = yield prisma.postReaction.create({
+            reaction = yield prisma_1.prisma.postReaction.create({
                 data: {
                     postId,
                     userId,
@@ -290,14 +289,14 @@ const deleteReaction = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
         // Check if post exists
-        const post = yield prisma.post.findUnique({
+        const post = yield prisma_1.prisma.post.findUnique({
             where: { id: postId }
         });
         if (!post) {
             throw new errorHandler_1.AppError(404, 'Post not found');
         }
         // Check if reaction exists
-        const existingReaction = yield prisma.postReaction.findFirst({
+        const existingReaction = yield prisma_1.prisma.postReaction.findFirst({
             where: {
                 postId,
                 userId
@@ -307,7 +306,7 @@ const deleteReaction = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             throw new errorHandler_1.AppError(404, 'Reaction not found');
         }
         // Delete the reaction
-        yield prisma.postReaction.delete({
+        yield prisma_1.prisma.postReaction.delete({
             where: { id: existingReaction.id }
         });
         res.json({

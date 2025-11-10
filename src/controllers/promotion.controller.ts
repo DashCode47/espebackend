@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils/prisma";
 import { AppError } from "../middlewares/errorHandler";
-
-const prisma = new PrismaClient();
 
 // Define PromotionCategory enum to match Prisma schema
 enum PromotionCategory {

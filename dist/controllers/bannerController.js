@@ -10,8 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bannerController = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../utils/prisma");
 exports.bannerController = {
     // Create a new banner
     create(req, res) {
@@ -19,7 +18,7 @@ exports.bannerController = {
             try {
                 const { title, description, imageUrl } = req.body;
                 console.log(req.body);
-                const banner = yield prisma.banner.create({
+                const banner = yield prisma_1.prisma.banner.create({
                     data: {
                         title,
                         description,
@@ -37,7 +36,7 @@ exports.bannerController = {
     getAll(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const banners = yield prisma.banner.findMany({
+                const banners = yield prisma_1.prisma.banner.findMany({
                     orderBy: {
                         createdAt: 'desc',
                     },
@@ -54,7 +53,7 @@ exports.bannerController = {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { id } = req.params;
-                const banner = yield prisma.banner.findUnique({
+                const banner = yield prisma_1.prisma.banner.findUnique({
                     where: { id },
                 });
                 if (!banner) {
@@ -73,7 +72,7 @@ exports.bannerController = {
             try {
                 const { id } = req.params;
                 const { title, description, imageUrl, isActive } = req.body;
-                const banner = yield prisma.banner.update({
+                const banner = yield prisma_1.prisma.banner.update({
                     where: { id },
                     data: {
                         title,
@@ -94,7 +93,7 @@ exports.bannerController = {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { id } = req.params;
-                yield prisma.banner.delete({
+                yield prisma_1.prisma.banner.delete({
                     where: { id },
                 });
                 return res.status(204).send();

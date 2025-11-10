@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCareersByModality = exports.getCareersByCampus = exports.deleteCareer = exports.updateCareer = exports.getCareerByCode = exports.getCareer = exports.getCareers = exports.createCareer = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
-const prisma = new client_1.PrismaClient();
 // Create a new career
 const createCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -34,13 +33,13 @@ const createCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             throw new errorHandler_1.AppError(400, 'Invalid director email format');
         }
         // Check if career code already exists
-        const existingCareer = yield prisma.career.findUnique({
+        const existingCareer = yield prisma_1.prisma.career.findUnique({
             where: { code }
         });
         if (existingCareer) {
             throw new errorHandler_1.AppError(400, 'Career code already exists');
         }
-        const career = yield prisma.career.create({
+        const career = yield prisma_1.prisma.career.create({
             data: {
                 code,
                 name,
@@ -92,7 +91,7 @@ const getCareers = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             where.isActive = isActive === 'true';
         }
         const [careers, total] = yield Promise.all([
-            prisma.career.findMany({
+            prisma_1.prisma.career.findMany({
                 where,
                 orderBy: {
                     name: 'asc'
@@ -100,7 +99,7 @@ const getCareers = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.career.count({ where })
+            prisma_1.prisma.career.count({ where })
         ]);
         res.json({
             status: 'success',
@@ -124,7 +123,7 @@ exports.getCareers = getCareers;
 const getCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { careerId } = req.params;
-        const career = yield prisma.career.findUnique({
+        const career = yield prisma_1.prisma.career.findUnique({
             where: { id: careerId }
         });
         if (!career) {
@@ -144,7 +143,7 @@ exports.getCareer = getCareer;
 const getCareerByCode = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { code } = req.params;
-        const career = yield prisma.career.findUnique({
+        const career = yield prisma_1.prisma.career.findUnique({
             where: { code: code.toUpperCase() }
         });
         if (!career) {
@@ -166,7 +165,7 @@ const updateCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         const { careerId } = req.params;
         const updateData = req.body;
         // Check if career exists
-        const existingCareer = yield prisma.career.findUnique({
+        const existingCareer = yield prisma_1.prisma.career.findUnique({
             where: { id: careerId }
         });
         if (!existingCareer) {
@@ -185,14 +184,14 @@ const updateCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         }
         // Check if new code already exists (if code is being updated)
         if (updateData.code && updateData.code !== existingCareer.code) {
-            const codeExists = yield prisma.career.findUnique({
+            const codeExists = yield prisma_1.prisma.career.findUnique({
                 where: { code: updateData.code }
             });
             if (codeExists) {
                 throw new errorHandler_1.AppError(400, 'Career code already exists');
             }
         }
-        const updatedCareer = yield prisma.career.update({
+        const updatedCareer = yield prisma_1.prisma.career.update({
             where: { id: careerId },
             data: updateData
         });
@@ -210,13 +209,13 @@ exports.updateCareer = updateCareer;
 const deleteCareer = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { careerId } = req.params;
-        const career = yield prisma.career.findUnique({
+        const career = yield prisma_1.prisma.career.findUnique({
             where: { id: careerId }
         });
         if (!career) {
             throw new errorHandler_1.AppError(404, 'Career not found');
         }
-        yield prisma.career.delete({
+        yield prisma_1.prisma.career.delete({
             where: { id: careerId }
         });
         res.json({
@@ -240,7 +239,7 @@ const getCareersByCampus = (req, res, next) => __awaiter(void 0, void 0, void 0,
             isActive: true
         };
         const [careers, total] = yield Promise.all([
-            prisma.career.findMany({
+            prisma_1.prisma.career.findMany({
                 where,
                 orderBy: {
                     name: 'asc'
@@ -248,7 +247,7 @@ const getCareersByCampus = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.career.count({ where })
+            prisma_1.prisma.career.count({ where })
         ]);
         res.json({
             status: 'success',
@@ -280,7 +279,7 @@ const getCareersByModality = (req, res, next) => __awaiter(void 0, void 0, void 
             isActive: true
         };
         const [careers, total] = yield Promise.all([
-            prisma.career.findMany({
+            prisma_1.prisma.career.findMany({
                 where,
                 orderBy: {
                     name: 'asc'
@@ -288,7 +287,7 @@ const getCareersByModality = (req, res, next) => __awaiter(void 0, void 0, void 
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.career.count({ where })
+            prisma_1.prisma.career.count({ where })
         ]);
         res.json({
             status: 'success',

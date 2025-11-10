@@ -10,11 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const hash_1 = require("../utils/hash");
 const jwt_1 = require("../utils/jwt");
 const errorHandler_1 = require("../middlewares/errorHandler");
-const prisma = new client_1.PrismaClient();
 const register = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password, name, career, gender, interests } = req.body;
@@ -23,7 +22,7 @@ const register = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
             throw new errorHandler_1.AppError(400, 'All fields are required');
         }
         // Check if user already exists
-        const existingUser = yield prisma.user.findUnique({
+        const existingUser = yield prisma_1.prisma.user.findUnique({
             where: { email }
         });
         if (existingUser) {
@@ -32,7 +31,7 @@ const register = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         // Hash password
         const hashedPassword = yield (0, hash_1.hashPassword)(password);
         // Create user
-        const user = yield prisma.user.create({
+        const user = yield prisma_1.prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
@@ -75,7 +74,7 @@ const login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* ()
             throw new errorHandler_1.AppError(400, 'Email and password are required');
         }
         // Find user
-        const user = yield prisma.user.findUnique({
+        const user = yield prisma_1.prisma.user.findUnique({
             where: { email }
         });
         if (!user) {

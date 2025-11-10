@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireRole = exports.UserRole = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("./errorHandler");
-const prisma = new client_1.PrismaClient();
 // Enum UserRole - se importará de Prisma una vez que los tipos se actualicen
 var UserRole;
 (function (UserRole) {
@@ -25,7 +24,7 @@ const requireRole = (...allowedRoles) => {
             if (!req.user) {
                 throw new errorHandler_1.AppError(401, 'Authentication required');
             }
-            const user = yield prisma.user.findUnique({
+            const user = yield prisma_1.prisma.user.findUnique({
                 where: { id: req.user.userId }
             });
             if (!user) {

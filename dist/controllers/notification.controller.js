@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createNotification = exports.markAllAsRead = exports.markAsRead = exports.getNotifications = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
-const prisma = new client_1.PrismaClient();
 // Get user's notifications
 const getNotifications = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -24,7 +23,7 @@ const getNotifications = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
         const [notifications, total] = yield Promise.all([
-            prisma.notification.findMany({
+            prisma_1.prisma.notification.findMany({
                 where: { userId },
                 orderBy: {
                     createdAt: 'desc'
@@ -32,11 +31,11 @@ const getNotifications = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.notification.count({
+            prisma_1.prisma.notification.count({
                 where: { userId }
             })
         ]);
-        const unreadCount = yield prisma.notification.count({
+        const unreadCount = yield prisma_1.prisma.notification.count({
             where: {
                 userId,
                 read: false
@@ -70,7 +69,7 @@ const markAsRead = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const notification = yield prisma.notification.findUnique({
+        const notification = yield prisma_1.prisma.notification.findUnique({
             where: { id: notificationId }
         });
         if (!notification) {
@@ -79,7 +78,7 @@ const markAsRead = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (notification.userId !== userId) {
             throw new errorHandler_1.AppError(403, 'Not authorized to update this notification');
         }
-        const updatedNotification = yield prisma.notification.update({
+        const updatedNotification = yield prisma_1.prisma.notification.update({
             where: { id: notificationId },
             data: { read: true }
         });
@@ -101,7 +100,7 @@ const markAllAsRead = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        yield prisma.notification.updateMany({
+        yield prisma_1.prisma.notification.updateMany({
             where: {
                 userId,
                 read: false
@@ -120,7 +119,7 @@ const markAllAsRead = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 exports.markAllAsRead = markAllAsRead;
 // Helper function to create notifications (used by other controllers)
 const createNotification = (userId, message) => __awaiter(void 0, void 0, void 0, function* () {
-    return prisma.notification.create({
+    return prisma_1.prisma.notification.create({
         data: {
             userId,
             message

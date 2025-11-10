@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma';
 import { AppError } from './errorHandler';
-
-const prisma = new PrismaClient();
 
 // Enum UserRole - se importará de Prisma una vez que los tipos se actualicen
 export enum UserRole {

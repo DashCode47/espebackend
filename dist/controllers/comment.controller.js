@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPostComments = exports.createComment = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
-const prisma = new client_1.PrismaClient();
 // Create a comment on a post
 const createComment = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -27,14 +26,14 @@ const createComment = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             throw new errorHandler_1.AppError(400, 'Comment content is required');
         }
         // Check if post exists
-        const post = yield prisma.post.findUnique({
+        const post = yield prisma_1.prisma.post.findUnique({
             where: { id: postId }
         });
         if (!post) {
             throw new errorHandler_1.AppError(404, 'Post not found');
         }
         // Create comment
-        const comment = yield prisma.comment.create({
+        const comment = yield prisma_1.prisma.comment.create({
             data: {
                 content,
                 authorId: userId,
@@ -68,7 +67,7 @@ const getPostComments = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         // Check if post exists
-        const post = yield prisma.post.findUnique({
+        const post = yield prisma_1.prisma.post.findUnique({
             where: { id: postId }
         });
         if (!post) {
@@ -76,7 +75,7 @@ const getPostComments = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         // Get comments with pagination
         const [comments, total] = yield Promise.all([
-            prisma.comment.findMany({
+            prisma_1.prisma.comment.findMany({
                 where: { postId },
                 include: {
                     author: {
@@ -93,7 +92,7 @@ const getPostComments = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                 skip,
                 take: limit
             }),
-            prisma.comment.count({
+            prisma_1.prisma.comment.count({
                 where: { postId }
             })
         ]);

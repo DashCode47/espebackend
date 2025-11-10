@@ -11,10 +11,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rateDriver = exports.getUserTrips = exports.confirmPassenger = exports.joinTrip = exports.cancelTrip = exports.updateTrip = exports.createTrip = exports.getTripById = exports.getTrips = void 0;
 const client_1 = require("@prisma/client");
+const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const notification_controller_1 = require("./notification.controller");
 const role_middleware_1 = require("../middlewares/role.middleware");
-const prisma = new client_1.PrismaClient();
 // GET /api/trips - Listar viajes activos con filtros opcionales
 const getTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -48,7 +48,7 @@ const getTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
             };
         }
         const [trips, total] = yield Promise.all([
-            prisma.trip.findMany({
+            prisma_1.prisma.trip.findMany({
                 where,
                 include: {
                     driver: {
@@ -85,7 +85,7 @@ const getTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
                 skip,
                 take: parseInt(limit)
             }),
-            prisma.trip.count({ where })
+            prisma_1.prisma.trip.count({ where })
         ]);
         // Calcular rating promedio del conductor para cada viaje
         const tripsWithRating = trips.map(trip => {
@@ -117,7 +117,7 @@ exports.getTrips = getTrips;
 const getTripById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id },
             include: {
                 driver: {
@@ -202,7 +202,7 @@ const createTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(400, 'Departure time cannot be in the past');
         }
         // Verificar que el usuario es DRIVER
-        const user = yield prisma.user.findUnique({
+        const user = yield prisma_1.prisma.user.findUnique({
             where: { id: userId }
         });
         // @ts-ignore - role exists in database after migration
@@ -210,7 +210,7 @@ const createTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(403, 'Only students and drivers can create trips');
         }
         // Verificar si ya existe un viaje activo del mismo conductor en la misma fecha/hora
-        const existingTrip = yield prisma.trip.findFirst({
+        const existingTrip = yield prisma_1.prisma.trip.findFirst({
             where: {
                 driverId: userId,
                 status: client_1.TripStatus.ACTIVE,
@@ -223,7 +223,7 @@ const createTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (existingTrip) {
             throw new errorHandler_1.AppError(409, 'You already have an active trip at this time');
         }
-        const trip = yield prisma.trip.create({
+        const trip = yield prisma_1.prisma.trip.create({
             data: {
                 driverId: userId,
                 origin,
@@ -265,7 +265,7 @@ const updateTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id }
         });
         if (!trip) {
@@ -295,7 +295,7 @@ const updateTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
                 throw new errorHandler_1.AppError(400, 'Available seats must be at least 1');
             }
             // Verificar que no se reduzcan los asientos por debajo de los pasajeros aceptados
-            const acceptedRequests = yield prisma.tripRequest.count({
+            const acceptedRequests = yield prisma_1.prisma.tripRequest.count({
                 where: {
                     tripId: id,
                     status: client_1.TripRequestStatus.ACCEPTED
@@ -310,7 +310,7 @@ const updateTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             updateData.price = price;
         if (notes !== undefined)
             updateData.notes = notes;
-        const updatedTrip = yield prisma.trip.update({
+        const updatedTrip = yield prisma_1.prisma.trip.update({
             where: { id },
             data: updateData,
             include: {
@@ -344,7 +344,7 @@ const cancelTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id },
             include: {
                 requests: {
@@ -367,12 +367,12 @@ const cancelTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(400, 'Trip is already cancelled');
         }
         // Actualizar el viaje a CANCELLED
-        const cancelledTrip = yield prisma.trip.update({
+        const cancelledTrip = yield prisma_1.prisma.trip.update({
             where: { id },
             data: { status: client_1.TripStatus.CANCELLED }
         });
         // Rechazar todas las solicitudes pendientes
-        yield prisma.tripRequest.updateMany({
+        yield prisma_1.prisma.tripRequest.updateMany({
             where: {
                 tripId: id,
                 status: client_1.TripRequestStatus.PENDING
@@ -405,7 +405,7 @@ const joinTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id },
             include: {
                 driver: {
@@ -438,7 +438,7 @@ const joinTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
             }
         }
         // Crear solicitud
-        const request = yield prisma.tripRequest.create({
+        const request = yield prisma_1.prisma.tripRequest.create({
             data: {
                 tripId: id,
                 passengerId: userId,
@@ -481,7 +481,7 @@ const confirmPassenger = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (!requestId) {
             throw new errorHandler_1.AppError(400, 'requestId is required');
         }
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id },
             include: {
                 requests: {
@@ -498,7 +498,7 @@ const confirmPassenger = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         if (trip.status !== client_1.TripStatus.ACTIVE) {
             throw new errorHandler_1.AppError(400, 'Trip is not active');
         }
-        const request = yield prisma.tripRequest.findUnique({
+        const request = yield prisma_1.prisma.tripRequest.findUnique({
             where: { id: requestId },
             include: {
                 passenger: {
@@ -521,7 +521,7 @@ const confirmPassenger = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             throw new errorHandler_1.AppError(400, 'Trip is full');
         }
         // Aceptar la solicitud
-        const updatedRequest = yield prisma.tripRequest.update({
+        const updatedRequest = yield prisma_1.prisma.tripRequest.update({
             where: { id: requestId },
             data: { status: client_1.TripRequestStatus.ACCEPTED },
             include: {
@@ -539,7 +539,7 @@ const confirmPassenger = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         const newAcceptedCount = acceptedCount + 1;
         let updatedTrip = trip;
         if (newAcceptedCount >= trip.availableSeats) {
-            updatedTrip = yield prisma.trip.update({
+            updatedTrip = yield prisma_1.prisma.trip.update({
                 where: { id },
                 data: { status: client_1.TripStatus.FULL },
                 include: {
@@ -570,7 +570,7 @@ const getUserTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     try {
         const { id } = req.params;
         const { type = 'all' } = req.query; // 'created', 'joined', 'all'
-        const user = yield prisma.user.findUnique({
+        const user = yield prisma_1.prisma.user.findUnique({
             where: { id }
         });
         if (!user) {
@@ -578,7 +578,7 @@ const getUserTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         }
         let trips = [];
         if (type === 'created' || type === 'all') {
-            const createdTrips = yield prisma.trip.findMany({
+            const createdTrips = yield prisma_1.prisma.trip.findMany({
                 where: { driverId: id },
                 include: {
                     driver: {
@@ -609,7 +609,7 @@ const getUserTrips = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             trips = [...trips, ...createdTrips.map(t => (Object.assign(Object.assign({}, t), { userRole: 'driver' })))];
         }
         if (type === 'joined' || type === 'all') {
-            const joinedRequests = yield prisma.tripRequest.findMany({
+            const joinedRequests = yield prisma_1.prisma.tripRequest.findMany({
                 where: {
                     passengerId: id,
                     status: client_1.TripRequestStatus.ACCEPTED
@@ -683,7 +683,7 @@ const rateDriver = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (!rating || rating < 1 || rating > 5) {
             throw new errorHandler_1.AppError(400, 'Rating must be between 1 and 5');
         }
-        const trip = yield prisma.trip.findUnique({
+        const trip = yield prisma_1.prisma.trip.findUnique({
             where: { id },
             include: {
                 driver: {
@@ -695,7 +695,7 @@ const rateDriver = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(404, 'Trip not found');
         }
         // Verificar que el usuario fue pasajero aceptado en este viaje
-        const request = yield prisma.tripRequest.findFirst({
+        const request = yield prisma_1.prisma.tripRequest.findFirst({
             where: {
                 tripId: id,
                 passengerId: userId,
@@ -706,7 +706,7 @@ const rateDriver = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             throw new errorHandler_1.AppError(403, 'You can only rate trips you participated in');
         }
         // Verificar si ya calificó
-        const existingRating = yield prisma.tripRating.findUnique({
+        const existingRating = yield prisma_1.prisma.tripRating.findUnique({
             where: {
                 tripId_raterId: {
                     tripId: id,
@@ -717,7 +717,7 @@ const rateDriver = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (existingRating) {
             throw new errorHandler_1.AppError(409, 'You have already rated this trip');
         }
-        const tripRating = yield prisma.tripRating.create({
+        const tripRating = yield prisma_1.prisma.tripRating.create({
             data: {
                 tripId: id,
                 raterId: userId,

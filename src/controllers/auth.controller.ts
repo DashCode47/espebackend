@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma';
 import { hashPassword, comparePasswords } from '../utils/hash';
 import { generateToken } from '../utils/jwt';
 import { AppError } from '../middlewares/errorHandler';
-
-const prisma = new PrismaClient();
 
 interface RegisterBody {
   email: string;
