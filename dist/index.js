@@ -44,8 +44,13 @@ app.get('/', (req, res) => {
 });
 // Error handler
 app.use(errorHandler_1.errorHandler);
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-    console.log(`Documentación Swagger disponible en: http://localhost:${PORT}/api-docs`);
-});
+// Only start server if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Servidor corriendo en puerto ${PORT}`);
+        console.log(`Documentación Swagger disponible en: http://localhost:${PORT}/api-docs`);
+    });
+}
+// Export app for Vercel
+exports.default = app;
