@@ -13,6 +13,7 @@ exports.deleteReaction = exports.reactToPost = exports.updatePost = exports.getP
 const prisma_1 = require("../utils/prisma");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const notification_controller_1 = require("./notification.controller");
+const gcs_1 = require("../utils/gcs");
 // Define PostType enum to match Prisma schema
 var PostType;
 (function (PostType) {
@@ -25,7 +26,8 @@ const createPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     var _a;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
-        const { type, content, title, imageUrl } = req.body;
+        const { type, content, title } = req.body;
+        const file = req.file;
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
@@ -35,6 +37,18 @@ const createPost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         // Validate title for MARKETPLACE and LOST_AND_FOUND
         if ((type === 'MARKETPLACE' || type === 'LOST_AND_FOUND') && !title) {
             throw new errorHandler_1.AppError(400, 'Title is required for marketplace and lost & found posts');
+        }
+        let imageUrl;
+        // If an image file was uploaded, upload it to Google Cloud Storage
+        if (file) {
+            try {
+                const fileName = (0, gcs_1.generateFileName)(file.originalname, userId);
+                imageUrl = yield (0, gcs_1.uploadToGCS)(file.buffer, fileName, file.mimetype);
+            }
+            catch (uploadError) {
+                console.error('Error uploading image to GCS:', uploadError);
+                throw new errorHandler_1.AppError(500, 'Failed to upload image');
+            }
         }
         const post = yield prisma_1.prisma.post.create({
             data: {
@@ -160,7 +174,8 @@ const updatePost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         const { postId } = req.params;
-        const { content, title, imageUrl } = req.body;
+        const { content, title } = req.body;
+        const file = req.file;
         if (!userId) {
             throw new errorHandler_1.AppError(401, 'Not authenticated');
         }
@@ -173,6 +188,26 @@ const updatePost = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         }
         if (existingPost.authorId !== userId) {
             throw new errorHandler_1.AppError(403, 'Not authorized to update this post');
+        }
+        let imageUrl = existingPost.imageUrl;
+        // If a new image file was uploaded, upload it to Google Cloud Storage
+        if (file) {
+            try {
+                // Delete old image from GCS if it exists
+                if (existingPost.imageUrl && existingPost.imageUrl.includes('storage.googleapis.com')) {
+                    const oldFileName = existingPost.imageUrl.split('/').pop();
+                    if (oldFileName) {
+                        yield (0, gcs_1.deleteFromGCS)(`posts/${userId}/${oldFileName}`);
+                    }
+                }
+                // Upload new image
+                const fileName = (0, gcs_1.generateFileName)(file.originalname, userId);
+                imageUrl = yield (0, gcs_1.uploadToGCS)(file.buffer, fileName, file.mimetype);
+            }
+            catch (uploadError) {
+                console.error('Error uploading image to GCS:', uploadError);
+                throw new errorHandler_1.AppError(500, 'Failed to upload image');
+            }
         }
         const updatedPost = yield prisma_1.prisma.post.update({
             where: { id: postId },

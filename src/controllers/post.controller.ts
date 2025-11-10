@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middlewares/errorHandler';
 import { createNotification } from './notification.controller';
+import { uploadToGCS, generateFileName, deleteFromGCS } from '../utils/gcs';
 
 // Define PostType enum to match Prisma schema
 enum PostType {
@@ -31,7 +32,8 @@ export const createPost = async (
 ) => {
   try {
     const userId = req.user?.userId;
-    const { type, content, title, imageUrl } = req.body;
+    const { type, content, title } = req.body;
+    const file = req.file;
 
     if (!userId) {
       throw new AppError(401, 'Not authenticated');
@@ -44,6 +46,19 @@ export const createPost = async (
     // Validate title for MARKETPLACE and LOST_AND_FOUND
     if ((type === 'MARKETPLACE' || type === 'LOST_AND_FOUND') && !title) {
       throw new AppError(400, 'Title is required for marketplace and lost & found posts');
+    }
+
+    let imageUrl: string | undefined;
+
+    // If an image file was uploaded, upload it to Google Cloud Storage
+    if (file) {
+      try {
+        const fileName = generateFileName(file.originalname, userId);
+        imageUrl = await uploadToGCS(file.buffer, fileName, file.mimetype);
+      } catch (uploadError) {
+        console.error('Error uploading image to GCS:', uploadError);
+        throw new AppError(500, 'Failed to upload image');
+      }
     }
 
     const post = await prisma.post.create({
@@ -185,7 +200,8 @@ export const updatePost = async (
   try {
     const userId = req.user?.userId;
     const { postId } = req.params;
-    const { content, title, imageUrl } = req.body;
+    const { content, title } = req.body;
+    const file = req.file;
 
     if (!userId) {
       throw new AppError(401, 'Not authenticated');
@@ -202,6 +218,28 @@ export const updatePost = async (
 
     if (existingPost.authorId !== userId) {
       throw new AppError(403, 'Not authorized to update this post');
+    }
+
+    let imageUrl = existingPost.imageUrl;
+
+    // If a new image file was uploaded, upload it to Google Cloud Storage
+    if (file) {
+      try {
+        // Delete old image from GCS if it exists
+        if (existingPost.imageUrl && existingPost.imageUrl.includes('storage.googleapis.com')) {
+          const oldFileName = existingPost.imageUrl.split('/').pop();
+          if (oldFileName) {
+            await deleteFromGCS(`posts/${userId}/${oldFileName}`);
+          }
+        }
+
+        // Upload new image
+        const fileName = generateFileName(file.originalname, userId);
+        imageUrl = await uploadToGCS(file.buffer, fileName, file.mimetype);
+      } catch (uploadError) {
+        console.error('Error uploading image to GCS:', uploadError);
+        throw new AppError(500, 'Failed to upload image');
+      }
     }
 
     const updatedPost = await prisma.post.update({

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createPost, getPosts, getPost, updatePost, reactToPost, deleteReaction } from '../controllers/post.controller';
 import { createComment, getPostComments } from '../controllers/comment.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
+import { uploadSingle } from '../middlewares/upload';
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.use(authMiddleware);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', createPost);
+router.post('/', uploadSingle, createPost);
 
 /**
  * @swagger
@@ -203,7 +204,7 @@ router.get('/:postId', getPost);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:postId', updatePost);
+router.put('/:postId', uploadSingle, updatePost);
 
 /**
  * @swagger

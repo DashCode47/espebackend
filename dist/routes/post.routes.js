@@ -4,6 +4,7 @@ const express_1 = require("express");
 const post_controller_1 = require("../controllers/post.controller");
 const comment_controller_1 = require("../controllers/comment.controller");
 const auth_middleware_1 = require("../middlewares/auth.middleware");
+const upload_1 = require("../middlewares/upload");
 const router = (0, express_1.Router)();
 // All routes require authentication
 router.use(auth_middleware_1.authMiddleware);
@@ -50,7 +51,7 @@ router.use(auth_middleware_1.authMiddleware);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', post_controller_1.createPost);
+router.post('/', upload_1.uploadSingle, post_controller_1.createPost);
 /**
  * @swagger
  * /api/posts:
@@ -199,7 +200,7 @@ router.get('/:postId', post_controller_1.getPost);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:postId', post_controller_1.updatePost);
+router.put('/:postId', upload_1.uploadSingle, post_controller_1.updatePost);
 /**
  * @swagger
  * /api/posts/{postId}/react:
