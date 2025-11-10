@@ -23,16 +23,28 @@ export const errorHandler = (
     });
   }
 
-  console.error('Error:', err);
+  // Log full error details
+  console.error('=== ERROR DETAILS ===');
+  console.error('Error name:', err.name);
+  console.error('Error message:', err.message);
+  console.error('Error stack:', err.stack);
+  if ((err as any).code) {
+    console.error('Error code:', (err as any).code);
+  }
+  console.error('Request URL:', req.url);
+  console.error('Request method:', req.method);
+  console.error('====================');
   
-  // In development, show more error details
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  // In development or Vercel preview, show more error details
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview';
   
   return res.status(500).json({
     status: 'error',
     message: 'Internal server error',
     ...(isDevelopment && { 
       error: err.message,
+      errorName: err.name,
+      ...((err as any).code && { code: (err as any).code }),
       stack: err.stack 
     })
   });

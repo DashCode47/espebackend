@@ -130,6 +130,12 @@ export const login = async (
       }
     });
   } catch (error) {
+    // Log error details for debugging
+    console.error('Login error:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     next(error);
   }
 }; 

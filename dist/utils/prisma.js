@@ -2,13 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prisma = void 0;
 const client_1 = require("@prisma/client");
-// PrismaClient is attached to the `global` object in development to prevent
+// PrismaClient is attached to the `global` object to prevent
 // exhausting your database connection limit in serverless environments.
-const globalForPrisma = global;
+const globalForPrisma = globalThis;
 exports.prisma = globalForPrisma.prisma ||
     new client_1.PrismaClient({
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     });
-if (process.env.NODE_ENV !== 'production')
+// Prevent multiple instances of Prisma Client in development
+if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = exports.prisma;
+}
 exports.default = exports.prisma;
