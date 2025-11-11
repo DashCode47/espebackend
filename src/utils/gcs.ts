@@ -56,12 +56,16 @@ export const uploadToGCS = async (
 
     // Upload the file
     console.log('Uploading file to bucket...');
+    // Don't use public: true when uniform bucket-level access is enabled
+    // The bucket should have public access configured via IAM instead
     await fileUpload.save(file, {
       metadata: {
         contentType,
       },
-      public: true, // Make the file publicly accessible
     });
+
+    // Note: With uniform bucket-level access, files are made public via bucket IAM policy
+    // not via ACLs. Make sure your bucket has public access configured at the IAM level.
 
     // Get the public URL
     const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
