@@ -62,23 +62,8 @@ const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, v
             throw new errorHandler_1.AppError(500, 'GCS credentials are not configured. Please set GCS_CREDENTIALS or GCS_KEY_FILENAME.');
         }
         const bucket = storage.bucket(bucketName);
-        // Check if bucket exists
-        console.log('Checking if bucket exists...');
-        const [exists] = yield bucket.exists();
-        if (!exists) {
-            throw new errorHandler_1.AppError(500, `Bucket "${bucketName}" does not exist in Google Cloud Storage`);
-        }
-        console.log('Bucket exists:', exists);
-        // Test permissions by trying to list files (this will fail if no permissions)
-        try {
-            console.log('Testing bucket permissions...');
-            yield bucket.getFiles({ maxResults: 1 });
-            console.log('Bucket permissions OK');
-        }
-        catch (permError) {
-            console.error('Bucket permission test failed:', permError);
-            throw new errorHandler_1.AppError(500, `No permissions on bucket "${bucketName}". Error: ${permError instanceof Error ? permError.message : 'Unknown'}`);
-        }
+        // Skip bucket.exists() check - Storage Object Admin doesn't have storage.buckets.get permission
+        // We'll try to upload directly and catch any errors
         const fileUpload = bucket.file(fileName);
         // Upload the file
         console.log('Uploading file to bucket...');
