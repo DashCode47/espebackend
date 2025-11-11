@@ -102,12 +102,13 @@ export const deleteFromGCS = async (fileName: string): Promise<void> => {
  * Generate a unique file name for uploads
  * @param originalName - The original file name
  * @param userId - The user ID to include in the path
+ * @param resourceType - The type of resource (posts, events, etc.) - defaults to 'posts'
  * @returns A unique file name with path
  */
-export const generateFileName = (originalName: string, userId: string): string => {
+export const generateFileName = (originalName: string, userId: string, resourceType: string = 'posts'): string => {
   const timestamp = Date.now();
   const randomString = Math.random().toString(36).substring(2, 15);
   const extension = originalName.split('.').pop() || 'jpg';
-  return `posts/${userId}/${timestamp}-${randomString}.${extension}`;
+  return `${resourceType}/${userId}/${timestamp}-${randomString}.${extension}`;
 };
 

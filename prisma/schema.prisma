@@ -47,6 +47,10 @@ model User {
   tripRequests     TripRequest[]
   ratingsGiven      TripRating[] @relation("RatingsGiven")
   ratingsReceived   TripRating[] @relation("RatingsReceived")
+  
+  // Events relations
+  eventsCreated    Event[]
+  eventAttendances EventAttendance[]
 }
 
 model Connection {
@@ -268,4 +272,48 @@ model TripRating {
   createdAt   DateTime @default(now())
 
   @@unique([tripId, raterId])
+}
+
+enum EventCategory {
+  SOCIAL
+  ACADEMIC
+  PRIVATE
+  SPORTS
+  OTHER
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String
+  categoria   EventCategory
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  ubicacion   String
+  precio      Float    @default(0)
+  creadoPor   String
+  creador     User     @relation(fields: [creadoPor], references: [id])
+  imagen      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  attendances EventAttendance[]
+
+  @@index([categoria])
+  @@index([fechaInicio])
+  @@index([ubicacion])
+}
+
+model EventAttendance {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
 }
