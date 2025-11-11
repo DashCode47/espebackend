@@ -2,14 +2,29 @@ import { Storage } from '@google-cloud/storage';
 import { AppError } from '../middlewares/errorHandler';
 
 // Initialize Google Cloud Storage
-const storage = new Storage({
-  projectId: process.env.GCS_PROJECT_ID,
-  keyFilename: process.env.GCS_KEY_FILENAME, // Path to service account key file
-  // Or use credentials from environment variable
-  credentials: process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined,
-});
+let storage: Storage;
+try {
+  const credentials = process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined;
+  console.log('Initializing GCS Storage with:', {
+    projectId: process.env.GCS_PROJECT_ID,
+    hasCredentials: !!credentials,
+    clientEmail: credentials?.client_email || 'Not set',
+    keyFilename: process.env.GCS_KEY_FILENAME || 'Not set'
+  });
+  
+  storage = new Storage({
+    projectId: process.env.GCS_PROJECT_ID,
+    keyFilename: process.env.GCS_KEY_FILENAME, // Path to service account key file
+    // Or use credentials from environment variable
+    credentials: credentials,
+  });
+} catch (initError) {
+  console.error('Error initializing GCS Storage:', initError);
+  throw initError;
+}
 
-const bucketName = process.env.GCS_BUCKET_NAME || 'especonnect-images';
+// Get bucket name from environment - must match exactly with GCS bucket name
+const bucketName = process.env.GCS_BUCKET_NAME || 'espe-connect'; // Default to espe-connect based on your bucket
 
 /**
  * Upload a file to Google Cloud Storage
@@ -47,9 +62,21 @@ export const uploadToGCS = async (
     const bucket = storage.bucket(bucketName);
     
     // Check if bucket exists
+    console.log('Checking if bucket exists...');
     const [exists] = await bucket.exists();
     if (!exists) {
       throw new AppError(500, `Bucket "${bucketName}" does not exist in Google Cloud Storage`);
+    }
+    console.log('Bucket exists:', exists);
+    
+    // Test permissions by trying to list files (this will fail if no permissions)
+    try {
+      console.log('Testing bucket permissions...');
+      await bucket.getFiles({ maxResults: 1 });
+      console.log('Bucket permissions OK');
+    } catch (permError) {
+      console.error('Bucket permission test failed:', permError);
+      throw new AppError(500, `No permissions on bucket "${bucketName}". Error: ${permError instanceof Error ? permError.message : 'Unknown'}`);
     }
     
     const fileUpload = bucket.file(fileName);

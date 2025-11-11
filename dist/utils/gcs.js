@@ -13,13 +13,28 @@ exports.generateFileName = exports.deleteFromGCS = exports.uploadToGCS = void 0;
 const storage_1 = require("@google-cloud/storage");
 const errorHandler_1 = require("../middlewares/errorHandler");
 // Initialize Google Cloud Storage
-const storage = new storage_1.Storage({
-    projectId: process.env.GCS_PROJECT_ID,
-    keyFilename: process.env.GCS_KEY_FILENAME, // Path to service account key file
-    // Or use credentials from environment variable
-    credentials: process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined,
-});
-const bucketName = process.env.GCS_BUCKET_NAME || 'especonnect-images';
+let storage;
+try {
+    const credentials = process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined;
+    console.log('Initializing GCS Storage with:', {
+        projectId: process.env.GCS_PROJECT_ID,
+        hasCredentials: !!credentials,
+        clientEmail: (credentials === null || credentials === void 0 ? void 0 : credentials.client_email) || 'Not set',
+        keyFilename: process.env.GCS_KEY_FILENAME || 'Not set'
+    });
+    storage = new storage_1.Storage({
+        projectId: process.env.GCS_PROJECT_ID,
+        keyFilename: process.env.GCS_KEY_FILENAME, // Path to service account key file
+        // Or use credentials from environment variable
+        credentials: credentials,
+    });
+}
+catch (initError) {
+    console.error('Error initializing GCS Storage:', initError);
+    throw initError;
+}
+// Get bucket name from environment - must match exactly with GCS bucket name
+const bucketName = process.env.GCS_BUCKET_NAME || 'espe-connect'; // Default to espe-connect based on your bucket
 /**
  * Upload a file to Google Cloud Storage
  * @param file - The file buffer or stream
@@ -48,9 +63,21 @@ const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, v
         }
         const bucket = storage.bucket(bucketName);
         // Check if bucket exists
+        console.log('Checking if bucket exists...');
         const [exists] = yield bucket.exists();
         if (!exists) {
             throw new errorHandler_1.AppError(500, `Bucket "${bucketName}" does not exist in Google Cloud Storage`);
+        }
+        console.log('Bucket exists:', exists);
+        // Test permissions by trying to list files (this will fail if no permissions)
+        try {
+            console.log('Testing bucket permissions...');
+            yield bucket.getFiles({ maxResults: 1 });
+            console.log('Bucket permissions OK');
+        }
+        catch (permError) {
+            console.error('Bucket permission test failed:', permError);
+            throw new errorHandler_1.AppError(500, `No permissions on bucket "${bucketName}". Error: ${permError instanceof Error ? permError.message : 'Unknown'}`);
         }
         const fileUpload = bucket.file(fileName);
         // Upload the file
