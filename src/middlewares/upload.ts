@@ -27,14 +27,8 @@ export const upload = multer({
 
 // Middleware for single image upload with error handling
 export const uploadSingle = (req: Request, res: Response, next: NextFunction) => {
-  // Log request info for debugging
-  console.log('=== MULTER MIDDLEWARE ===');
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('Content-Length:', req.headers['content-length']);
-  
   upload.single('image')(req, res, (err) => {
     if (err) {
-      console.error('Multer error:', err);
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return next(new AppError(400, 'File size too large. Maximum size is 5MB'));
@@ -46,21 +40,6 @@ export const uploadSingle = (req: Request, res: Response, next: NextFunction) =>
       }
       return next(err);
     }
-    
-    // Log what multer received
-    console.log('Multer processed:', {
-      hasFile: !!req.file,
-      fileInfo: req.file ? {
-        fieldname: req.file.fieldname,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        hasBuffer: !!req.file.buffer,
-        bufferLength: req.file.buffer?.length
-      } : null,
-      body: req.body
-    });
-    console.log('========================');
     
     next();
   });

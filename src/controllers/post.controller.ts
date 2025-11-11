@@ -35,20 +35,6 @@ export const createPost = async (
     const { type, content, title } = req.body;
     const file = req.file;
 
-    // Debug logging
-    console.log('=== POST CREATE DEBUG ===');
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Body:', { type, content, title });
-    console.log('File received:', file ? {
-      fieldname: file.fieldname,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      hasBuffer: !!file.buffer,
-      bufferLength: file.buffer?.length
-    } : 'No file');
-    console.log('========================');
-
     if (!userId) {
       throw new AppError(401, 'Not authenticated');
     }
@@ -73,11 +59,8 @@ export const createPost = async (
 
       try {
         const fileName = generateFileName(file.originalname || 'image.jpg', userId);
-        console.log('Uploading to GCS:', { fileName, size: file.buffer.length, mimetype: file.mimetype });
         imageUrl = await uploadToGCS(file.buffer, fileName, file.mimetype || 'image/jpeg');
-        console.log('Image uploaded successfully:', imageUrl);
       } catch (uploadError) {
-        console.error('Error uploading image to GCS:', uploadError);
         if (uploadError instanceof AppError) {
           throw uploadError;
         }

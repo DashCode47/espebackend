@@ -13,26 +13,11 @@ exports.generateFileName = exports.deleteFromGCS = exports.uploadToGCS = void 0;
 const storage_1 = require("@google-cloud/storage");
 const errorHandler_1 = require("../middlewares/errorHandler");
 // Initialize Google Cloud Storage
-let storage;
-try {
-    const credentials = process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined;
-    console.log('Initializing GCS Storage with:', {
-        projectId: process.env.GCS_PROJECT_ID,
-        hasCredentials: !!credentials,
-        clientEmail: (credentials === null || credentials === void 0 ? void 0 : credentials.client_email) || 'Not set',
-        keyFilename: process.env.GCS_KEY_FILENAME || 'Not set'
-    });
-    storage = new storage_1.Storage({
-        projectId: process.env.GCS_PROJECT_ID,
-        keyFilename: process.env.GCS_KEY_FILENAME, // Path to service account key file
-        // Or use credentials from environment variable
-        credentials: credentials,
-    });
-}
-catch (initError) {
-    console.error('Error initializing GCS Storage:', initError);
-    throw initError;
-}
+const storage = new storage_1.Storage({
+    projectId: process.env.GCS_PROJECT_ID,
+    keyFilename: process.env.GCS_KEY_FILENAME,
+    credentials: process.env.GCS_CREDENTIALS ? JSON.parse(process.env.GCS_CREDENTIALS) : undefined,
+});
 // Get bucket name from environment - must match exactly with GCS bucket name
 const bucketName = process.env.GCS_BUCKET_NAME || 'espe-connect'; // Default to espe-connect based on your bucket
 /**
@@ -43,15 +28,7 @@ const bucketName = process.env.GCS_BUCKET_NAME || 'espe-connect'; // Default to 
  * @returns The public URL of the uploaded file
  */
 const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     try {
-        // Check configuration first
-        console.log('=== GCS UPLOAD DEBUG ===');
-        console.log('GCS_PROJECT_ID:', process.env.GCS_PROJECT_ID ? 'Set' : 'Not set');
-        console.log('GCS_BUCKET_NAME:', bucketName);
-        console.log('GCS_CREDENTIALS:', process.env.GCS_CREDENTIALS ? 'Set' : 'Not set');
-        console.log('GCS_KEY_FILENAME:', process.env.GCS_KEY_FILENAME ? 'Set' : 'Not set');
-        console.log('File info:', { fileName, contentType, size: file.length });
         if (!process.env.GCS_PROJECT_ID) {
             throw new errorHandler_1.AppError(500, 'GCS_PROJECT_ID is not configured');
         }
@@ -62,36 +39,19 @@ const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, v
             throw new errorHandler_1.AppError(500, 'GCS credentials are not configured. Please set GCS_CREDENTIALS or GCS_KEY_FILENAME.');
         }
         const bucket = storage.bucket(bucketName);
-        // Skip bucket.exists() check - Storage Object Admin doesn't have storage.buckets.get permission
-        // We'll try to upload directly and catch any errors
         const fileUpload = bucket.file(fileName);
         // Upload the file
-        console.log('Uploading file to bucket...');
-        // Don't use public: true when uniform bucket-level access is enabled
-        // The bucket should have public access configured via IAM instead
+        // Note: With uniform bucket-level access, files are made public via bucket IAM policy, not ACLs
         yield fileUpload.save(file, {
             metadata: {
                 contentType,
             },
         });
-        // Note: With uniform bucket-level access, files are made public via bucket IAM policy
-        // not via ACLs. Make sure your bucket has public access configured at the IAM level.
         // Get the public URL
         const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
-        console.log('Upload successful:', publicUrl);
-        console.log('========================');
         return publicUrl;
     }
     catch (error) {
-        console.error('=== GCS UPLOAD ERROR ===');
-        console.error('Error type:', (_a = error === null || error === void 0 ? void 0 : error.constructor) === null || _a === void 0 ? void 0 : _a.name);
-        console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-        console.error('Error code:', error === null || error === void 0 ? void 0 : error.code);
-        console.error('Error details:', (error === null || error === void 0 ? void 0 : error.errors) || ((_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data));
-        if (error instanceof Error && error.stack) {
-            console.error('Stack trace:', error.stack);
-        }
-        console.error('========================');
         // Re-throw AppError as-is
         if (error instanceof errorHandler_1.AppError) {
             throw error;
@@ -107,6 +67,7 @@ const uploadToGCS = (file, fileName, contentType) => __awaiter(void 0, void 0, v
         if ((gcsError === null || gcsError === void 0 ? void 0 : gcsError.code) === 401) {
             throw new errorHandler_1.AppError(500, 'Authentication failed. Check your GCS credentials.');
         }
+        console.error('Error uploading to GCS:', error);
         throw new errorHandler_1.AppError(500, `Failed to upload image to Google Cloud Storage: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 });
