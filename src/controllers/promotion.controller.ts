@@ -18,7 +18,7 @@ interface CreatePromotionBody {
   category: PromotionCategory;
   discount?: number;
   validUntil: string;
-  location?: string;
+  establishmentId: string;
   isActive?: boolean;
 }
 
@@ -29,7 +29,7 @@ interface UpdatePromotionBody {
   category?: PromotionCategory;
   discount?: number;
   validUntil?: string;
-  location?: string;
+  establishmentId?: string;
   isActive?: boolean;
 }
 
@@ -47,15 +47,15 @@ export const createPromotion = async (
       category,
       discount,
       validUntil,
-      location,
+      establishmentId,
       isActive = true,
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !validUntil) {
+    if (!title || !description || !category || !validUntil || !establishmentId) {
       throw new AppError(
         400,
-        "Title, description, category, and validUntil are required"
+        "Title, description, category, validUntil, and establishmentId are required"
       );
     }
 
@@ -70,6 +70,15 @@ export const createPromotion = async (
       throw new AppError(400, "Discount must be between 0 and 100");
     }
 
+    // Check if establishment exists
+    const establishment = await prisma.establishment.findUnique({
+      where: { id: establishmentId },
+    });
+
+    if (!establishment) {
+      throw new AppError(404, "Establishment not found");
+    }
+
     const promotion = await prisma.promotion.create({
       data: {
         title,
@@ -77,9 +86,13 @@ export const createPromotion = async (
         imageUrl,
         startDate: new Date(), // Start from now
         endDate: validUntilDate, // End at validUntil
-        location: location || "Frente a la ESPE", // You might want to make this configurable
         category,
+        discount,
+        establishmentId,
         isActive,
+      },
+      include: {
+        establishment: true,
       },
     });
 
@@ -119,6 +132,9 @@ export const getPromotions = async (
     const [promotions, total] = await Promise.all([
       prisma.promotion.findMany({
         where,
+        include: {
+          establishment: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -156,6 +172,9 @@ export const getPromotion = async (
 
     const promotion = await prisma.promotion.findUnique({
       where: { id: promotionId },
+      include: {
+        establishment: true,
+      },
     });
 
     if (!promotion) {
@@ -187,7 +206,7 @@ export const updatePromotion = async (
       discount,
       validUntil,
       isActive,
-      location,
+      establishmentId,
     } = req.body;
 
     // Check if promotion exists
@@ -214,6 +233,17 @@ export const updatePromotion = async (
       throw new AppError(400, "End date must be after start date");
     }
 
+    // Check if establishment exists if provided
+    if (establishmentId) {
+      const establishment = await prisma.establishment.findUnique({
+        where: { id: establishmentId },
+      });
+
+      if (!establishment) {
+        throw new AppError(404, "Establishment not found");
+      }
+    }
+
     const updatedPromotion = await prisma.promotion.update({
       where: { id: promotionId },
       data: {
@@ -222,9 +252,13 @@ export const updatePromotion = async (
         imageUrl,
         startDate: start,
         endDate: end,
-        location: location || "Frente a la ESPE", // You might want to make this configurable
         category,
+        discount,
+        establishmentId,
         isActive,
+      },
+      include: {
+        establishment: true,
       },
     });
 
@@ -297,6 +331,9 @@ export const getPromotionsByCategory = async (
     const [promotions, total] = await Promise.all([
       prisma.promotion.findMany({
         where,
+        include: {
+          establishment: true,
+        },
         orderBy: {
           createdAt: "desc",
         },

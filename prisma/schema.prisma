@@ -168,6 +168,25 @@ model Banner {
   updatedAt   DateTime @updatedAt
 }
 
+model Establishment {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  address     String
+  phone       String?
+  email       String?
+  imageUrl    String?
+  website     String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  promotions  Promotion[]
+
+  @@index([isActive])
+}
+
 enum PromotionCategory {
   FOOD
   DRINKS
@@ -177,18 +196,26 @@ enum PromotionCategory {
 }
 
 model Promotion {
-  id          String            @id @default(uuid())
-  title       String
-  description String
-  imageUrl    String?
-  startDate   DateTime
-  endDate     DateTime
-  location    String
-  category    PromotionCategory
-  discount    Int?              @default(0)
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id              String            @id @default(uuid())
+  title           String
+  description     String
+  imageUrl        String?
+  startDate       DateTime
+  endDate         DateTime
+  category        PromotionCategory
+  discount        Int?              @default(0)
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  establishmentId String
+  establishment   Establishment    @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@index([establishmentId])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
 }
 
 model Career {
