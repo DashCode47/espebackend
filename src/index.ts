@@ -21,8 +21,41 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Middlewares - CORS Configuration
+const allowedOrigins = [
+  'https://fit-flex-six.vercel.app',
+  'https://fitandflex-production.up.railway.app',
+  'http://localhost:3000',
+  'http://localhost:8080',
+];
+
+// Agregar orígenes desde variable de entorno si existe
+if (process.env.ALLOWED_ORIGINS) {
+  const envOrigins = process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
+  allowedOrigins.push(...envOrigins);
+}
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como mobile apps o Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // En desarrollo, permitir todos los orígenes
+      // En producción, descomentar la siguiente línea para bloquear orígenes no permitidos
+      // callback(new Error('Not allowed by CORS'));
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}));
 
 // JSON parser - skip for multipart/form-data (let multer handle it)
 app.use((req, res, next) => {
